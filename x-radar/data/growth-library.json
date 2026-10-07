@@ -1,0 +1,731 @@
+{
+  "version": "2026-10-06.1",
+  "checkedAt": "2026-10-06",
+  "scope": "普通受众的 AI 热点、工具与玩法；中文 X 中长文图文",
+  "repositories": [
+    {
+      "id": "baoyu",
+      "name": "JimLiu/baoyu-skills",
+      "title": "长文配图与知识图解",
+      "status": "已适配",
+      "learned": "文章结构决定图的位置；图的类型、风格与色板分别约束。",
+      "boundary": "配图方案与提示词已适配；继续使用工作台已有图片 API。",
+      "url": "https://github.com/JimLiu/baoyu-skills",
+      "license": "MIT",
+      "stars": 26359,
+      "pushedAt": "2026-09-10T15:13:43Z",
+      "checkedAt": "2026-10-06T04:51:18.734Z",
+      "commit": "1567581c26ec29f4216c6e6835415bf30343b0e3",
+      "evidence": [
+        {
+          "path": "skills/baoyu-article-illustrator/SKILL.md",
+          "url": "https://github.com/JimLiu/baoyu-skills/blob/1567581c26ec29f4216c6e6835415bf30343b0e3/skills/baoyu-article-illustrator/SKILL.md"
+        },
+        {
+          "path": "skills/baoyu-article-illustrator/references/prompt-construction.md",
+          "url": "https://github.com/JimLiu/baoyu-skills/blob/1567581c26ec29f4216c6e6835415bf30343b0e3/skills/baoyu-article-illustrator/references/prompt-construction.md"
+        },
+        {
+          "path": "skills/baoyu-cover-image/SKILL.md",
+          "url": "https://github.com/JimLiu/baoyu-skills/blob/1567581c26ec29f4216c6e6835415bf30343b0e3/skills/baoyu-cover-image/SKILL.md"
+        }
+      ]
+    },
+    {
+      "id": "xskills",
+      "name": "sergebulaev/x-skills",
+      "title": "开头、结构与账号门面",
+      "status": "已适配",
+      "learned": "从参考帖提取可填空的骨架，再用自己的事实写正文。",
+      "boundary": "只接入文字拆解方法；上游没有内置帖子读取器，发布依赖 Publora。",
+      "url": "https://github.com/sergebulaev/x-skills",
+      "license": "MIT",
+      "stars": 117,
+      "pushedAt": "2026-10-03T10:57:39Z",
+      "checkedAt": "2026-10-06T04:51:49.247Z",
+      "commit": "c4ac9bac771733d7716b3143c7c2ef1bac9899f6",
+      "evidence": [
+        {
+          "path": "skills/x-hook-extractor/SKILL.md",
+          "url": "https://github.com/sergebulaev/x-skills/blob/c4ac9bac771733d7716b3143c7c2ef1bac9899f6/skills/x-hook-extractor/SKILL.md"
+        },
+        {
+          "path": "skills/x-profile-optimizer/SKILL.md",
+          "url": "https://github.com/sergebulaev/x-skills/blob/c4ac9bac771733d7716b3143c7c2ef1bac9899f6/skills/x-profile-optimizer/SKILL.md"
+        }
+      ]
+    },
+    {
+      "id": "xgrowth",
+      "name": "kangarooking/X-growth-skills",
+      "title": "中文冷启动与对标研究",
+      "status": "已适配",
+      "learned": "按曝光到关注的路径找问题，对标后改变人群、场景或角度。",
+      "boundary": "二次提炼的作者经验；固定增长数字、互关方案和精确算法权重不作为工作台结论。",
+      "url": "https://github.com/kangarooking/X-growth-skills",
+      "license": "MIT",
+      "stars": 69,
+      "pushedAt": "2026-07-14T11:53:48Z",
+      "checkedAt": "2026-10-06T04:52:15.653Z",
+      "commit": "cfd2f44a2427437b8583bc302f29e1561c703c9b",
+      "evidence": [
+        {
+          "path": "x-benchmark-research/SKILL.md",
+          "url": "https://github.com/kangarooking/X-growth-skills/blob/cfd2f44a2427437b8583bc302f29e1561c703c9b/x-benchmark-research/SKILL.md"
+        },
+        {
+          "path": "x-data-review/SKILL.md",
+          "url": "https://github.com/kangarooking/X-growth-skills/blob/cfd2f44a2427437b8583bc302f29e1561c703c9b/x-data-review/SKILL.md"
+        }
+      ]
+    },
+    {
+      "id": "marketing",
+      "name": "coreyhaines31/marketingskills",
+      "title": "内容支柱与轮播叙事",
+      "status": "已适配",
+      "learned": "把内容分成稳定支柱；选择对应叙事结构并用真实数据复盘。",
+      "boundary": "用于内容规划与统一视觉提示；不自动发布或回复。",
+      "url": "https://github.com/coreyhaines31/marketingskills",
+      "license": "MIT",
+      "stars": 53386,
+      "pushedAt": "2026-10-03T01:51:50Z",
+      "checkedAt": "2026-10-06T04:51:18.745Z",
+      "commit": "dda3841f0b294e01e93b1541486beefbfab0915e",
+      "evidence": [
+        {
+          "path": "skills/social/SKILL.md",
+          "url": "https://github.com/coreyhaines31/marketingskills/blob/dda3841f0b294e01e93b1541486beefbfab0915e/skills/social/SKILL.md"
+        },
+        {
+          "path": "skills/social/references/carousel-frameworks.md",
+          "url": "https://github.com/coreyhaines31/marketingskills/blob/dda3841f0b294e01e93b1541486beefbfab0915e/skills/social/references/carousel-frameworks.md"
+        }
+      ]
+    },
+    {
+      "id": "algorithm",
+      "name": "xai-org/x-algorithm",
+      "title": "推荐机制的代码参考",
+      "status": "解释已接入",
+      "learned": "代码为展开图片、停留、主页点击、关注等动作设置独立预测项。",
+      "boundary": "仅能确认评分结构，不能把某一权重或发布时间当作所有账号的增长公式。",
+      "url": "https://github.com/xai-org/x-algorithm",
+      "license": "Apache-2.0",
+      "stars": 33514,
+      "pushedAt": "2026-10-03T03:26:57Z",
+      "checkedAt": "2026-10-06T04:51:18.720Z",
+      "commit": "b412112d03f27acbfd668e0cc040abcafa1080c1",
+      "evidence": [
+        {
+          "path": "home-mixer/scorers/value_model.rs",
+          "url": "https://github.com/xai-org/x-algorithm/blob/b412112d03f27acbfd668e0cc040abcafa1080c1/home-mixer/scorers/value_model.rs"
+        },
+        {
+          "path": "home-mixer/scorers/phoenix_scores_ranking_scorer.rs",
+          "url": "https://github.com/xai-org/x-algorithm/blob/b412112d03f27acbfd668e0cc040abcafa1080c1/home-mixer/scorers/phoenix_scores_ranking_scorer.rs"
+        }
+      ]
+    },
+    {
+      "id": "growthmate",
+      "name": "ibrahimahmed/growthmate",
+      "title": "X 选题、写作、排程与分析",
+      "status": "仅研究",
+      "learned": "区分灵感库、正文草稿、发布队列和表现数据。",
+      "boundary": "核心检索和生成路由要求 X OAuth；没有部署原应用。",
+      "url": "https://github.com/ibrahimahmed/growthmate",
+      "license": "MIT",
+      "stars": 4,
+      "pushedAt": "2026-07-27T18:19:00Z",
+      "checkedAt": "2026-10-06T04:51:19.421Z",
+      "commit": "aea4fcdab135a2d4921cd03257eb7135e0baba62",
+      "evidence": [
+        {
+          "path": "src/app/api/writer/generate/route.ts",
+          "url": "https://github.com/ibrahimahmed/growthmate/blob/aea4fcdab135a2d4921cd03257eb7135e0baba62/src/app/api/writer/generate/route.ts"
+        },
+        {
+          "path": "src/app/api/viral/route.ts",
+          "url": "https://github.com/ibrahimahmed/growthmate/blob/aea4fcdab135a2d4921cd03257eb7135e0baba62/src/app/api/viral/route.ts"
+        }
+      ]
+    },
+    {
+      "id": "postiz",
+      "name": "gitroomhq/postiz-app",
+      "title": "多平台发布排程",
+      "status": "仅研究",
+      "learned": "草稿与发布队列分开，发布后形成记录。",
+      "boundary": "X provider 使用 OAuth 和官方接口；本轮保留人工发布，未接账号。",
+      "url": "https://github.com/gitroomhq/postiz-app",
+      "license": "AGPL-3.0",
+      "stars": 36730,
+      "pushedAt": "2026-10-06T03:32:22Z",
+      "checkedAt": "2026-10-06T04:51:18.738Z",
+      "commit": "86b3c3dd55d38fbed77fdbf82a21bfc1a169cac6",
+      "evidence": [
+        {
+          "path": "libraries/nestjs-libraries/src/integrations/social/x.provider.ts",
+          "url": "https://github.com/gitroomhq/postiz-app/blob/86b3c3dd55d38fbed77fdbf82a21bfc1a169cac6/libraries/nestjs-libraries/src/integrations/social/x.provider.ts"
+        }
+      ]
+    },
+    {
+      "id": "scrl",
+      "name": "HeyPortal/open-scrl",
+      "title": "本机图文排版与图片导出",
+      "status": "仅研究",
+      "learned": "内容与页面布局分离，用统一画幅导出多页图文。",
+      "boundary": "已有本机编辑与导出代码；没有部署这个独立编辑器。",
+      "url": "https://github.com/HeyPortal/open-scrl",
+      "license": "MIT",
+      "stars": 3,
+      "pushedAt": "2026-10-02T19:12:40Z",
+      "checkedAt": "2026-10-06T04:51:18.742Z",
+      "commit": "821cf089cc6ef1af5b46c0a994eb2d84b2b192e6",
+      "evidence": [
+        {
+          "path": "src/export/ExportController.ts",
+          "url": "https://github.com/HeyPortal/open-scrl/blob/821cf089cc6ef1af5b46c0a994eb2d84b2b192e6/src/export/ExportController.ts"
+        },
+        {
+          "path": "src/export/canvas2d/render.ts",
+          "url": "https://github.com/HeyPortal/open-scrl/blob/821cf089cc6ef1af5b46c0a994eb2d84b2b192e6/src/export/canvas2d/render.ts"
+        }
+      ]
+    },
+    {
+      "id": "slidr",
+      "name": "UitbreidenOS/Slidr",
+      "title": "主题驱动的图文卡片",
+      "status": "仅研究",
+      "learned": "以设计说明保存风格、布局和统一画幅。",
+      "boundary": "代码 AGPL-3.0，内容 CC BY-SA 4.0，不能按 MIT 一键复制；未部署。",
+      "url": "https://github.com/UitbreidenOS/Slidr",
+      "license": "AGPL-3.0 + CC BY-SA 4.0",
+      "stars": 3,
+      "pushedAt": "2026-09-01T21:36:25Z",
+      "checkedAt": "2026-10-06T04:51:18.793Z",
+      "commit": "19b87ed3cad56a0e647f1b6173d5b6ce01e3a3fc",
+      "evidence": [
+        {
+          "path": "LICENSE-CODE",
+          "url": "https://github.com/UitbreidenOS/Slidr/blob/19b87ed3cad56a0e647f1b6173d5b6ce01e3a3fc/LICENSE-CODE"
+        },
+        {
+          "path": "LICENSE-CONTENT",
+          "url": "https://github.com/UitbreidenOS/Slidr/blob/19b87ed3cad56a0e647f1b6173d5b6ce01e3a3fc/LICENSE-CONTENT"
+        },
+        {
+          "path": "src/app/api/images/generate/route.ts",
+          "url": "https://github.com/UitbreidenOS/Slidr/blob/19b87ed3cad56a0e647f1b6173d5b6ce01e3a3fc/src/app/api/images/generate/route.ts"
+        }
+      ]
+    },
+    {
+      "id": "carousel",
+      "name": "robort-gabriel/Carousel-Post-Generator-AI-Agent",
+      "title": "文章到多页图片的工作流",
+      "status": "仅研究",
+      "learned": "读取文章、生成分镜、逐张生图、保存输出分别处理。",
+      "boundary": "源码可读，但未见 LICENSE；只学习流程，没有复制实现或安装。",
+      "url": "https://github.com/robort-gabriel/Carousel-Post-Generator-AI-Agent",
+      "license": "未声明",
+      "stars": 0,
+      "pushedAt": "2025-12-25T13:08:13Z",
+      "checkedAt": "2026-10-06T04:51:18.794Z",
+      "commit": "7feaae0810b091bb133a9b151126460fe46ba9cb",
+      "evidence": [
+        {
+          "path": "carousel_post_generator_agent.py",
+          "url": "https://github.com/robort-gabriel/Carousel-Post-Generator-AI-Agent/blob/7feaae0810b091bb133a9b151126460fe46ba9cb/carousel_post_generator_agent.py"
+        },
+        {
+          "path": "main.py",
+          "url": "https://github.com/robort-gabriel/Carousel-Post-Generator-AI-Agent/blob/7feaae0810b091bb133a9b151126460fe46ba9cb/main.py"
+        }
+      ]
+    },
+    {
+      "id": "socialflow",
+      "name": "inbharatai/SocialFlow",
+      "title": "资讯到内容的流程引擎",
+      "status": "仅研究",
+      "learned": "收集、规划、创作、审稿、发布、分析分步存档。",
+      "boundary": "未见 LICENSE；X 创作默认短帖，发布依赖登录态，未部署。",
+      "url": "https://github.com/inbharatai/SocialFlow",
+      "license": "未声明",
+      "stars": 36,
+      "pushedAt": "2026-05-09T12:31:25Z",
+      "checkedAt": "2026-10-06T04:51:49.616Z",
+      "commit": "d450ae0584cccd81923ac7b99f6fd98e2d17d69d",
+      "evidence": [
+        {
+          "path": "backend/agents/creator.py",
+          "url": "https://github.com/inbharatai/SocialFlow/blob/d450ae0584cccd81923ac7b99f6fd98e2d17d69d/backend/agents/creator.py"
+        }
+      ]
+    }
+  ],
+  "methods": [
+    {
+      "id": "profile",
+      "category": "定位",
+      "title": "让主页回答“为什么关注你”",
+      "principle": "主页承接帖子带来的访客。",
+      "steps": [
+        "简介写清普通读者会持续得到什么。",
+        "置顶帖给出你的定位、代表内容与阅读顺序。",
+        "用实际作品作为证明，不填未经核实的成绩。"
+      ],
+      "sources": [
+        "article-fish",
+        "xskills"
+      ],
+      "boundary": "作者经验；不能据此保证访客转粉。"
+    },
+    {
+      "id": "pin",
+      "category": "定位",
+      "title": "把置顶帖做成内容入口",
+      "principle": "让新读者能沿着一个路径认识你。",
+      "steps": [
+        "先给一句定位。",
+        "列出三类代表内容的链接。",
+        "告诉读者从哪篇开始，并定期检查失效链接。"
+      ],
+      "sources": [
+        "xskills"
+      ],
+      "boundary": "建议模板，不是 X 的强制规则。"
+    },
+    {
+      "id": "pillars",
+      "category": "定位",
+      "title": "固定三类内容支柱",
+      "principle": "热点解读、工具教程、玩法案例各服务不同任务。",
+      "steps": [
+        "用普通人正在做的具体任务命名内容。",
+        "把候选选题归入一类，避免每篇换定位。",
+        "记录哪一类更值得收藏、哪一类更能带来关注。"
+      ],
+      "sources": [
+        "marketing",
+        "article-fish"
+      ],
+      "boundary": "三类支柱按你的账号定位设定，不代表通用最佳数量。"
+    },
+    {
+      "id": "benchmark",
+      "category": "选题",
+      "title": "对标时同时看高位与普通样本",
+      "principle": "比较已取得的同作者样本，找可复用的结构。",
+      "steps": [
+        "选受众接近的博主。",
+        "看高表现帖，也看中低位和近期帖。",
+        "标注样本范围、帖龄与未知指标。"
+      ],
+      "sources": [
+        "xgrowth",
+        "xskills"
+      ],
+      "boundary": "公开采样可能缺帖，样本排名不代表账号完整历史。"
+    },
+    {
+      "id": "reader-task",
+      "category": "选题",
+      "title": "把新闻翻译成读者的任务",
+      "principle": "读者需要知道这个变化与自己有什么关系。",
+      "steps": [
+        "写出读者面对的具体情境。",
+        "列出这次变化能帮助完成什么任务。",
+        "提供入口、步骤和当前不能确定的事项。"
+      ],
+      "sources": [
+        "xgrowth",
+        "marketing"
+      ],
+      "boundary": "功能、价格和日期仍需一手材料核实。"
+    },
+    {
+      "id": "angle",
+      "category": "复刻",
+      "title": "只借骨架，换自己的角度和材料",
+      "principle": "参考的对象是组织方法，正文事实来自自己的材料。",
+      "steps": [
+        "标出开头、解释、步骤、证据、收尾各自作用。",
+        "选一个更具体的人群或使用场景。",
+        "把自己的事实填进空白骨架，核对长句重合。"
+      ],
+      "sources": [
+        "xskills",
+        "xgrowth"
+      ],
+      "boundary": "文字相似检查不能证明原创；不能借用他人的亲测或收入作自己的经历。"
+    },
+    {
+      "id": "hook",
+      "category": "复刻",
+      "title": "先写三个有依据的开头",
+      "principle": "用具体任务、材料中的结果或真实问题承接正文。",
+      "steps": [
+        "分别试任务型、结果型、问题型开头。",
+        "每个承诺在正文里都有对应内容。",
+        "删掉无法兑现的数字和夸张结果。"
+      ],
+      "sources": [
+        "xskills",
+        "article-title"
+      ],
+      "boundary": "结构建议，不预测哪个开头会爆。"
+    },
+    {
+      "id": "outline",
+      "category": "复刻",
+      "title": "先定每一段的职责",
+      "principle": "读者回报、解释、步骤、限制依次展开。",
+      "steps": [
+        "开头告诉读者能拿走什么。",
+        "正文每段只解决一个问题。",
+        "结尾留可保存的清单或下一步。"
+      ],
+      "sources": [
+        "xskills",
+        "marketing"
+      ],
+      "boundary": "中长文按需要使用，不强行凑固定段数。"
+    },
+    {
+      "id": "sources",
+      "category": "复刻",
+      "title": "保留事实的来源和归属",
+      "principle": "参考结构与本帖事实分别记录。",
+      "steps": [
+        "引用作者的判断时保留作者归属。",
+        "只写当前已取得材料可以支持的内容。",
+        "实测、截图和未核实事项单独列出。"
+      ],
+      "sources": [
+        "article-fish",
+        "marketing"
+      ],
+      "boundary": "没有看过配图或视频时，不能断言原帖没有展示。"
+    },
+    {
+      "id": "cover",
+      "category": "图文",
+      "title": "封面先讲一个清晰的用途",
+      "principle": "封面服务于内容入口。",
+      "steps": [
+        "标题用短句表达一个任务或问题。",
+        "简体中文、主体清楚、手机可读。",
+        "封面示意与真实结果图分别标注。"
+      ],
+      "sources": [
+        "baoyu"
+      ],
+      "boundary": "封面建议，不替代真实测试证据。"
+    },
+    {
+      "id": "visual-type",
+      "category": "图文",
+      "title": "根据内容选图的类型",
+      "principle": "流程、对比、框架和清单对应不同表达任务。",
+      "steps": [
+        "操作步骤用流程图。",
+        "选项差异用比较图。",
+        "判断要点用清单卡片或框架图。"
+      ],
+      "sources": [
+        "baoyu",
+        "marketing"
+      ],
+      "boundary": "配图方法已适配，未调用上游完整技能执行器。"
+    },
+    {
+      "id": "visual-style",
+      "category": "图文",
+      "title": "同一篇统一风格和色板",
+      "principle": "信息结构与视觉风格分开约束。",
+      "steps": [
+        "先确定这篇用什么图解类型。",
+        "整组图使用同一风格、色板和文字尺度。",
+        "每张图只承载一个重点，减少小字。"
+      ],
+      "sources": [
+        "baoyu",
+        "marketing"
+      ],
+      "boundary": "参考帖配图未分析时，这只是新帖的视觉建议。"
+    },
+    {
+      "id": "proof-image",
+      "category": "图文",
+      "title": "真实截图与示意图分别使用",
+      "principle": "读者应能区分证据与解释。",
+      "steps": [
+        "截图来自自己实际操作或明确标注的原始来源。",
+        "生成图用于说明概念和流程。",
+        "结果、统计和界面不能靠生成图伪造。"
+      ],
+      "sources": [
+        "marketing",
+        "baoyu"
+      ],
+      "boundary": "使用工作台已有截图上传与原创插图能力。"
+    },
+    {
+      "id": "share-learning",
+      "category": "内容节奏",
+      "title": "把日常实践留下可分享的记录",
+      "principle": "记录输入、过程、发现和可复用的提示词。",
+      "steps": [
+        "实践时同步记下一条具体发现。",
+        "保存原始过程和限制。",
+        "从记录中挑一个问题写成帖子。"
+      ],
+      "sources": [
+        "article-dotey"
+      ],
+      "boundary": "作者经验；不把个人方法当作效果保证。"
+    },
+    {
+      "id": "quote-value",
+      "category": "互动",
+      "title": "引用转发时补上自己的增量",
+      "principle": "解释适用人群、限制或下一步，保留原帖。",
+      "steps": [
+        "读完当前能取得的原文。",
+        "补一个有材料支持的观察。",
+        "保留链接，避免只有赞叹或照搬摘要。"
+      ],
+      "sources": [
+        "article-yuwen"
+      ],
+      "boundary": "工作台只生成草稿，由你决定是否发布。"
+    },
+    {
+      "id": "conversation",
+      "category": "互动",
+      "title": "优先回答真实问题",
+      "principle": "评论区可以帮助发现下一篇的具体任务。",
+      "steps": [
+        "回复你确实能回答的问题。",
+        "把重复问题记成选题。",
+        "需要测试的答复写清未知项。"
+      ],
+      "sources": [
+        "article-fish",
+        "algorithm"
+      ],
+      "boundary": "代码可确认回复等预测项；这里不使用未经核实的权重数字。"
+    },
+    {
+      "id": "cadence",
+      "category": "内容节奏",
+      "title": "按可完成的产量安排发布",
+      "principle": "先执行一个能持续的小计划。",
+      "steps": [
+        "本周挑三篇中长文图文，这是工作台起步目标。",
+        "为每篇留出取证、写作和配图时间。",
+        "选择你方便检查和回应的时间发布。"
+      ],
+      "sources": [
+        "marketing"
+      ],
+      "boundary": "这是工作台建议，不是算法要求或最佳发布时间。"
+    },
+    {
+      "id": "review",
+      "category": "复盘",
+      "title": "在相近帖龄比较内容表现",
+      "principle": "累计数字随发布时间增长，比较前先记录观察时间。",
+      "steps": [
+        "保存发布时间与回填时间。",
+        "记录阅读、收藏、回复与可归因的关注。",
+        "把同类型内容放在相近帖龄下比较。"
+      ],
+      "sources": [
+        "xgrowth",
+        "marketing"
+      ],
+      "boundary": "空白指标保持未知；没有个人实绩时不做流量预测。"
+    },
+    {
+      "id": "one-test",
+      "category": "复盘",
+      "title": "每轮只改变一个主要变量",
+      "principle": "给改动留下可观察的结果。",
+      "steps": [
+        "挑一个变量：开头、图解类型或内容支柱。",
+        "记录改动理由与对照内容。",
+        "复盘后决定继续、改进还是停止。"
+      ],
+      "sources": [
+        "marketing",
+        "xgrowth"
+      ],
+      "boundary": "相关性不等于因果；样本少时只形成下一轮假设。"
+    },
+    {
+      "id": "longtail",
+      "category": "复盘",
+      "title": "保存有用内容，持续迭代",
+      "principle": "偶发高表现帖需要和日常产出一起看。",
+      "steps": [
+        "记录高位帖解决了什么任务。",
+        "把可复用部分沉淀成模板。",
+        "补充新材料后重新创作，注明更新与来源。"
+      ],
+      "sources": [
+        "xgrowth",
+        "article-dotey"
+      ],
+      "boundary": "不能机械重发相同内容或把别人数据当个人基线。"
+    }
+  ],
+  "articles": [
+    {
+      "id": "article-fish",
+      "postId": "2104911243739853231",
+      "author": "鱼总聊AI",
+      "handle": "AI_Jasonyu",
+      "title": "从起号到变现的一年复盘",
+      "summary": "重点学习定位、主页承接、冷启动内容与真实讨论。作者的收入和涨粉属于自述，不作为你的预期结果；算法权重相关说法需另行核实。",
+      "date": "2026-09-29",
+      "status": "长文文字已取得；图片未分析",
+      "url": "https://x.com/AI_Jasonyu/status/2104911243739853231",
+      "checkedAt": "2026-10-06",
+      "kind": "作者经验"
+    },
+    {
+      "id": "article-position",
+      "postId": "2105159557970329823",
+      "author": "鱼总聊AI",
+      "handle": "AI_Jasonyu",
+      "title": "持续提供价值与账号定位",
+      "summary": "把面向谁、提供什么内容与长期定位连在一起。作者个人变现路径不能直接推成所有账号的路线。",
+      "date": "2026-09-30",
+      "status": "主帖文字已取得",
+      "url": "https://x.com/AI_Jasonyu/status/2105159557970329823",
+      "checkedAt": "2026-10-06",
+      "kind": "作者经验"
+    },
+    {
+      "id": "article-yuwen",
+      "postId": "2104926272099090464",
+      "author": "余温",
+      "handle": "gkxspace",
+      "title": "余温对鱼总复盘的增量解读",
+      "summary": "可以观察怎样引用原文后补观点与编号清单。曝光、主页承接、回复是可测试方向，具体权重与收益例子不能直接照搬。",
+      "date": "2026-09-29",
+      "status": "主帖文字已取得；引用内容分别归属",
+      "url": "https://x.com/gkxspace/status/2104926272099090464",
+      "checkedAt": "2026-10-06",
+      "kind": "作者经验"
+    },
+    {
+      "id": "article-dotey",
+      "postId": "2106153681423130801",
+      "author": "宝玉",
+      "handle": "dotey",
+      "title": "怎样降低日常经验分享的成本",
+      "summary": "从真实使用、把不同观察串联，以及分享结果和提示词三个方面组织创作记录。适合转成自己的素材笔记流程。",
+      "date": "2026-10-03",
+      "status": "主帖文字已取得",
+      "url": "https://x.com/dotey/status/2106153681423130801",
+      "checkedAt": "2026-10-06",
+      "kind": "作者经验"
+    },
+    {
+      "id": "article-persistence",
+      "postId": "2103792240523104346",
+      "author": "余温",
+      "handle": "gkxspace",
+      "title": "持续输出与拆解账号的经验",
+      "summary": "把没有流量时的观察和调整记录下来，研究同类账号的内容与逻辑。文中个人收入只是作者声明。",
+      "date": "2026-09-26",
+      "status": "主帖文字已取得",
+      "url": "https://x.com/gkxspace/status/2103792240523104346",
+      "checkedAt": "2026-10-06",
+      "kind": "作者经验"
+    },
+    {
+      "id": "article-title",
+      "postId": "2103477139991564538",
+      "author": "GitHubDaily",
+      "handle": "GitHub_Daily",
+      "title": "标题从夸张形容词回到具体用途",
+      "summary": "观察工具介绍怎样先提出读者痛点，再说明入口与用法。标题应具体且能够被正文兑现。",
+      "date": "2026-09-25",
+      "status": "主帖文字已取得",
+      "url": "https://x.com/GitHub_Daily/status/2103477139991564538",
+      "checkedAt": "2026-10-06",
+      "kind": "作者经验"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "intro",
+      "title": "补齐简介和内容承诺",
+      "methodId": "profile"
+    },
+    {
+      "id": "pin",
+      "title": "整理置顶帖的代表内容入口",
+      "methodId": "pin"
+    },
+    {
+      "id": "bench",
+      "title": "拆两篇对标内容，并保留原帖",
+      "methodId": "benchmark"
+    },
+    {
+      "id": "facts",
+      "title": "选三篇自己的主题，补充真实材料",
+      "methodId": "reader-task"
+    },
+    {
+      "id": "first",
+      "title": "完成第一篇中长文与配图",
+      "methodId": "visual-type"
+    },
+    {
+      "id": "publish",
+      "title": "人工发布并登记链接",
+      "methodId": "cadence"
+    },
+    {
+      "id": "review",
+      "title": "回填真实数据，确定下一轮要改的变量",
+      "methodId": "review"
+    }
+  ],
+  "layouts": [
+    {
+      "id": "checklist",
+      "name": "判断清单",
+      "use": "几个明确问题或检查项",
+      "rule": "一张图承载3—5项；大标题、清晰编号，避免密集小字。"
+    },
+    {
+      "id": "flow",
+      "name": "步骤流程",
+      "use": "有先后关系的操作",
+      "rule": "按真实操作顺序排列；箭头表示流程，不编造省时数字。"
+    },
+    {
+      "id": "comparison",
+      "name": "选项对比",
+      "use": "不同工具或方案的已知差异",
+      "rule": "使用材料支持的比较维度；未知项标为待核实，不生成不存在的性能数据。"
+    },
+    {
+      "id": "framework",
+      "name": "方法框架",
+      "use": "分类、关系和判断模型",
+      "rule": "用少量节点展示关系；区分作者建议与已验证结论。"
+    }
+  ]
+}

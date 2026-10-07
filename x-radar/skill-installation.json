@@ -1,0 +1,26 @@
+{
+  "updatedAt": "2026-10-05",
+  "packages": [
+    {
+      "name": "cheat-on-content",
+      "repository": "https://github.com/XBuilderLAB/cheat-on-content",
+      "commit": "a138d911880f6b7ef61df3015e1022eb8478baff",
+      "license": "MIT",
+      "installedEntrypoints": ["cheat-on-content"],
+      "adaptation": "保留来源、理由、方法版本和校准边界；未初始化账号数据时不输出阅读量预测。"
+    },
+    {
+      "name": "dbskill",
+      "repository": "https://github.com/dontbesilent2025/dbskill",
+      "commit": "a0e6fa356c58eca1a6e804c319ea7aac3db4a9af",
+      "license": "CC BY-NC 4.0",
+      "installedEntrypoints": ["dbs", "dbs-content", "dbs-content-value", "dbs-resonate", "dbs-spread", "dbs-ai-check"],
+      "adaptation": "用于选题受众与阅读收益判断、原句共鸣诊断和内容结构检查；私人非商业使用。"
+    }
+  ],
+  "webIntegration": [
+    "今日雷达的每条选题展示 audience、readerBenefit、angleBasis、materialGap 和未校准 confidence。",
+    "稿件正文阶段可运行内容审稿；审稿意见必须引用正文原句，正文修改后报告失效。",
+    "工作台不自动执行完整 cheat 盲预测、跨模型评分、T+N 复盘或阅读量预测。"
+  ]
+}

@@ -1,0 +1,36 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { growthPage } from '../web/growth-view.js';
+import { growthLibrary } from '../growth.mjs';
+import { researchFixture } from './growth-fixture.mjs';
+const fixture = researchFixture();
+const testLibrary = { ...growthLibrary, lowFollowerStudies: fixture.studies, lowFollowerCriteria: fixture.criteria };
+const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ui={esc:escape,link:(url,title)=>`<a href="${escape(url)}">${escape(title)}</a>`,date:s=>s||'未知',button:(title,action,attributes='')=>`<button data-action="${action}" ${attributes}>${title}</button>`,notice:body=>`<div>${body}</div>`};
+const state={settings:{textModel:'test',imageMode:'api'},growth:{library:testLibrary,references:[],candidates:[],analyses:[],drafts:[],progress:{learned:[],tasks:[]},metrics:[]}};
+const form={tab:'methods',category:'全部',mode:'manual',referenceText:'<script>恶意输入</script>',referenceURL:'',analysisId:'',draftId:'',topic:'',ownAngle:'',ownMaterial:'',bodies:{},metric:{}};
+test('growth views expose actual sources and limits, escape input, preserve unknown metrics and zero',()=>{
+  const methods=growthPage(state,form,ui);assert(methods.includes('20'));assert(methods.includes('github.com'));assert(methods.includes('候选'));
+  const tools=growthPage(state,{...form,tab:'tools'},ui);assert(tools.includes('未见 LICENSE'));assert(tools.includes('不等于部署'));
+  const create=growthPage(state,{...form,tab:'create'},ui);assert(create.includes('&lt;script&gt;'));assert(!create.includes('<script>'));assert(create.includes('参考内容不会自动成为'));
+  const review=growthPage({...state,growth:{...state.growth,metrics:[{url:'https://x.com/Study/status/123',title:'测试快照',observedAt:'2026-10-06T00:00:00Z',ageHours:72,views:null,bookmarks:0,bookmarkRate:null,follows:null,likes:null,replies:null,reposts:null,notes:''}]}},{...form,tab:'review'},ui);
+  assert(review.includes('72.0 小时'));assert(review.includes('<td>未知</td><td>0</td><td>未知</td>'));
+});
+test('low-follower cases show current snapshots, limited baselines and the reusable reference action', () => {
+  const examples = growthPage(state, { ...form, tab: 'examples' }, ui);
+  assert(examples.includes('低粉高表现：原帖与拆解'));
+  assert(examples.includes('10,000'));
+  assert(examples.includes('发帖时粉丝数：未知'));
+  assert(examples.includes('不足 3 条，不计算日常基线'));
+  assert(examples.includes('data-id="low-100101"'));
+  assert(examples.includes('使用这份拆解写新帖'));
+  assert(examples.includes('图片未分析'));
+  assert(!examples.includes('保准爆款'));
+  const source = fixture.studies[0];
+  const hostile = { ...growthLibrary, lowFollowerStudies: [{ ...source, title: '<script>unsafe</script>', metrics: { ...source.metrics, bookmarks: 0, views: null } }] };
+  const safe = growthPage({ ...state, growth: { ...state.growth, library: hostile } }, { ...form, tab: 'examples' }, ui);
+  assert(safe.includes('&lt;script&gt;unsafe&lt;/script&gt;'));
+  assert(!safe.includes('<script>unsafe</script>'));
+  assert(safe.includes('收藏 0'));
+  assert(safe.includes('未知</strong> 累计阅读'));
+});
