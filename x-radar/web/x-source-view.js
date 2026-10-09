@@ -9,10 +9,11 @@ const typeName = p => p.article ? 'X 长文' : p.kind === 'long' ? '长帖' : p.
 function avatar(name, image) { return `<span class="x-avatar"><span>${esc([...name][0] || 'X')}</span>${safeImage(image) ? `<img src="${esc(imagePath(safeImage(image)))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}</span>`; }
 function roots(x) {
   const out = [];
+  const comments = new Map((x.commentCollections || []).map(c => [c.postId, c.report.count]));
   for (const config of x.config.accounts) {
     const account = x.accounts.find(s => s.handle.toLowerCase() === config.handle.toLowerCase());
     const posts = (account?.posts || []).filter(p => p.own && !p.replyToId);
-    for (const post of posts) out.push({ ...post, handle: config.handle, enabled: config.enabled, account });
+    for (const post of posts) out.push({ ...post, handle: config.handle, enabled: config.enabled, account, commentCount: comments.get(post.id) });
   }
   return out;
 }
@@ -37,7 +38,7 @@ function postCard(p, sort, pin = false) {
     <div class="x-card-body"><div class="x-card-tags"><span class="tag">${pin ? '置顶参考' : typeName(p)}</span>${!p.enabled ? '<span class="tag">账号已停用</span>' : ''}${p.quote?.article ? '<span class="tag">含引用长文</span>' : ''}</div>
     <button class="x-card-title" data-action="x-open" ${extra}>${esc(p.title)}</button>${p.quote ? `<small class="x-quote-attribution">引用 ${esc(p.quote.authorName)} @${esc(p.quote.author)}</small>` : ''}<p class="x-excerpt">${esc(detail?.slice(0, 220) || p.article?.body?.slice(0, 220) || '原文尚未完整取得，请打开原帖查看。')}</p>
     <div class="x-card-author">${avatar(p.authorName, p.avatar)}<div><strong>${esc(p.authorName)}</strong><small>@${esc(p.author)} · ${numeric(p.metrics.views)} 曝光</small></div><div class="x-card-metric"><strong>${numeric(p.metrics[metric])}</strong><small>${metricLabel}</small></div></div>
-    <div class="x-card-bottom"><time datetime="${esc(p.publishedAt)}">${esc(date(p.publishedAt))}</time>${btn('找选题 ↗', 'x-topic', extra)}</div>${p.article?.contentStatus === 'preview_only' || p.quote?.article?.contentStatus === 'preview_only' ? '<small class="x-pin-state">长文目前仅有预览 · 打开详情可读取正文</small>' : ''}${pin ? `<small class="x-pin-state">${p.account.report.pin.status === 'confirmed' ? '置顶核对：' + esc(date(p.pinVerifiedAt)) : '当前置顶未确认 · 展示上次快照'}</small>` : ''}</div></article>`;
+    <div class="x-card-bottom"><time datetime="${esc(p.publishedAt)}">${esc(date(p.publishedAt))}</time>${btn('评论素材' + (Number.isInteger(p.commentCount) ? ' · ' + p.commentCount : ''), 'x-open-comments', extra)}${btn('找选题 ↗', 'x-topic', extra)}</div>${p.article?.contentStatus === 'preview_only' || p.quote?.article?.contentStatus === 'preview_only' ? '<small class="x-pin-state">长文目前仅有预览 · 打开详情可读取正文</small>' : ''}${pin ? `<small class="x-pin-state">${p.account.report.pin.status === 'confirmed' ? '置顶核对：' + esc(date(p.pinVerifiedAt)) : '当前置顶未确认 · 展示上次快照'}</small>` : ''}</div></article>`;
 }
 function reportHTML(account) {
   const r = account?.report;
@@ -49,7 +50,7 @@ function reportHTML(account) {
 export function xPage(state, filters) {
   const x = state.x; const all = roots(x); const pins = x.config.accounts.map(config => {
     const account = x.accounts.find(s => s.handle.toLowerCase() === config.handle.toLowerCase());
-    return account?.pinned ? { ...account.pinned, handle: config.handle, enabled: config.enabled, account } : null;
+    return account?.pinned ? { ...account.pinned, handle: config.handle, enabled: config.enabled, account, commentCount: x.commentCollections?.find(c => c.postId === account.pinned.id)?.report.count } : null;
   }).filter(Boolean);
   const data = filters.type === 'pinned' ? pins.filter(p => matches(p, { ...filters, range: 'all' })) : all.filter(p => matches(p, filters));
   sortPosts(data, filters.sort);
@@ -58,9 +59,14 @@ export function xPage(state, filters) {
   const bad = x.accounts.filter(a => a.report.status !== 'ok');
   const latest = x.accounts.map(a => a.report.lastSuccessAt).filter(Boolean).sort().at(-1);
   const tabs = [['all', '全部'], ['long', '长文 / 长帖'], ['quote', '引用帖'], ['pinned', '置顶参考']];
+  const collections = (x.commentCollections || []).map(c => {
+    const post = [...all, ...pins].find(p => p.id === c.postId);
+    return post && (filters.account === 'all' || filters.account.toLowerCase() === c.handle.toLowerCase()) ? { ...c, post } : null;
+  }).filter(Boolean);
+  const commentHub = `<section class="panel x-comments-hub"><div class="sectionhead"><h2>评论素材</h2><span class="tag">X 信号源内 · 匿名采集</span></div><p class="muted">每张帖子卡片都有「评论素材」按钮，点击直接查看或补全。已保存的评论也可以从这里打开。</p>${collections.length ? `<div class="x-comment-collections">${collections.map(c => `<article><div><strong>${esc(c.post.authorName)} · ${c.report.count} 条已保存评论</strong><p>${esc(c.post.title.slice(0, 90))}</p></div>${btn('查看 ' + c.report.count + ' 条评论', 'x-open-comments', `data-handle="${esc(c.handle)}" data-id="${esc(c.postId)}"`, true)}</article>`).join('')}</div>` : '<small class="muted">当前还没有已保存的评论。先打开任意帖子卡片上的「评论素材」。</small>'}</section>`;
   return `<section class="x-page"><div class="hero"><div><div class="eyebrow">Your public X signals</div><h1>X 信号源<span class="x-beta">私人观察名单</span></h1><p>从公开原帖，发现值得写的东西。无需登录 X；刷新采集不调用写作模型。</p></div><div class="actions">${btn('刷新公开帖子', 'x-refresh', '', true)}${btn(state.daily ? '重新筛选今日选题' : '生成今日精选', 'x-daily')}</div></div>
     <div class="x-summary"><span><strong>${activeAccounts.length}</strong> 个启用账号</span><span><strong>${all.length}</strong> 条已缓存主帖</span><span>自动选题取最近 <strong>7</strong> 天</span><small>${latest ? '最近取得：' + esc(date(latest)) : '第一次采集将读取最近 12 天'}${bad.length ? ' · ' + bad.length + ' 个账号存在采集缺口' : ''}</small></div>
-    <div class="sectionhead"><h2>观察账号</h2>${btn('管理账号', 'x-manage')}</div><div class="x-accounts">${x.config.accounts.map(config => {
+    ${commentHub}<div class="sectionhead"><h2>观察账号</h2>${btn('管理账号', 'x-manage')}</div><div class="x-accounts">${x.config.accounts.map(config => {
       const account = x.accounts.find(s => s.handle.toLowerCase() === config.handle.toLowerCase());
       const count = all.filter(p => p.handle === config.handle).length;
       const status = !config.enabled ? '已停用' : !account ? '待采集' : account.report.status === 'ok' ? '已读取' : account.report.status === 'partial' ? '部分取得' : '读取失败';
@@ -77,7 +83,20 @@ export function xPage(state, filters) {
     <div class="x-source-note"><strong>选题怎么用这些材料？</strong><p>最近 7 天的本人主帖和引用帖参与筛选；普通回复与纯转发不单独参与。每账号最多取 12 条，兼顾新帖和高收藏，全名单最多 48 条 X 材料。与 AIHOT 合并后，由写作模型判断普通读者能获得什么，合并重复事件，最多推荐 5 个，不凑数。“找选题”只围绕当前帖子生成角度；两个选题按钮都会使用已配置的写作 API。</p><small>长文封面、头像来自原帖。曝光、收藏等是公开服务返回的累计快照，未知显示“—”；不是新增流量、全站榜单或事实核实结论。</small></div></section>`;
 }
 
-export function xReader(state, selected) {
+export function xCommentsPanel(post, selected, snapshot) {
+  const extra = `data-handle="${esc(selected.handle)}" data-id="${esc(post.id)}"`;
+  const report = snapshot?.report, limit = selected.commentLimit || 24;
+  const rows = [...(snapshot?.comments || [])];
+  if (selected.commentSort === 'likes') rows.sort((a, b) => (b.metrics.likes ?? -1) - (a.metrics.likes ?? -1));
+  return `<section class="x-article x-comments" id="x-comments"><div class="sectionhead"><h3>评论素材 ${report ? '· ' + report.count + ' 条' : ''}</h3><span class="tag">匿名采集 · 无需写作模型</span></div>
+    <p class="muted">合并最新和高互动评论，沿回复关系补充上下文，自动去重并保存。评论是读者表达，可用于发现问题和选题。</p>
+    <div class="actions">${btn(report?.canContinue ? '继续补全评论' : report ? '刷新评论' : '补全公开评论', 'x-comments', extra + (report && !report.canContinue ? ' data-refresh="true"' : ''), true)}${report?.canContinue ? btn('从最新重新检查', 'x-comments', extra + ' data-refresh="true"') : ''}${rows.length ? btn('复制评论素材', 'x-copy-comments', extra) : ''}</div>
+    ${report ? `<p class="x-comment-count">已保存 <strong>${report.count}</strong> 条 · 本轮新增 ${report.newCount} 条 · ${report.totalPages} 页${report.reportedReplies !== null ? ' · 原帖显示回复数 ' + numeric(report.reportedReplies) : ''}<br><small>最近保存：${esc(date(report.lastSavedAt))}${report.budgetReached ? ' · 进度已保存，可继续补全' : report.canContinue ? ' · 仍有可读取的分页' : ' · 本轮读取结束，可刷新再检查'}${report.unresolvedCount ? ' · 另有 ' + report.unresolvedCount + ' 条待确认上下文' : ''}</small></p>
+      <details><summary>查看读取记录</summary><p class="muted">${esc(report.notice)} 原帖显示的回复数与可取得记录的计数口径可能不同。</p>${report.routes.map(r => `<p>${esc(r.label)}：${r.pages} 页 · ${{ active: '可继续', exhausted: '当前结果已读完', blocked: '暂时未能继续' }[r.status] || '待确认'}</p>`).join('')}${report.errors.map(e => `<small class="x-report-error">${esc(e.source)}：${esc(e.message)}</small>`).join('<br>')}</details>` : '<p class="muted">尚未采集这篇帖子的评论。</p>'}
+    ${rows.length ? `<div class="x-chipgroup"><button data-action="x-comment-sort" data-value="latest" class="${selected.commentSort !== 'likes' ? 'selected' : ''}">最新优先</button><button data-action="x-comment-sort" data-value="likes" class="${selected.commentSort === 'likes' ? 'selected' : ''}">高赞优先</button></div>${rows.slice(0, limit).map(c => `<article class="x-comment"><div class="x-reader-author">${avatar(c.authorName, c.avatar)}<div><strong>${esc(c.authorName)} @${esc(c.author)}</strong><small>${esc(date(c.publishedAt))} · ${link(c.url, '查看评论原文')}</small></div></div><div class="pre">${esc(c.body || c.article?.body || c.article?.preview || '图片评论，请打开原文查看')}</div><small>${c.replyToId === post.id ? '回复主帖' : link('https://x.com/i/status/' + c.replyToId, '回复另一条评论')} · 点赞 ${numeric(c.metrics.likes)} · 回复 ${numeric(c.metrics.replies)}</small></article>`).join('')}${limit < rows.length ? btn('再显示 ' + Math.min(24, rows.length - limit) + ' 条评论', 'x-comment-more') : ''}` : ''}</section>`;
+}
+
+export function xReader(state, selected, commentSnapshot = null, progressMessage = '') {
   if (!selected) return '';
   const account = state.x.accounts.find(a => a.handle.toLowerCase() === selected.handle.toLowerCase());
   const p = account?.posts.find(p => p.id === selected.id) || (account?.pinned?.id === selected.id ? account.pinned : null);
@@ -88,5 +107,8 @@ export function xReader(state, selected) {
   const candidates = account.posts.filter(i => i.own && i.author.toLowerCase() === p.author.toLowerCase() && i.replyToId).sort((a, b) => a.publishedAt.localeCompare(b.publishedAt));
   for (let n = 0; n < candidates.length; n++) { let changed = false; for (const i of candidates) if (!included.has(i.id) && included.has(i.replyToId)) { included.add(i.id); replies.push(i); changed = true; } if (!changed) break; }
   const article = a => a ? `<section class="x-article"><h3>${esc(a.title)}</h3><small>${a.body ? '已取得长文正文' : '仅取得长文预览 · 正文未取得'}${a.bodyFetchedAt ? ' · 正文快照：' + esc(date(a.bodyFetchedAt)) : ''} · ${link(a.url, '打开原文')}</small><div class="pre">${esc(a.body || a.preview)}</div></section>` : '';
-  return `<dialog id="x-reader" class="x-reader"><div class="x-reader-top"><span class="tag">公开原帖 · ${typeName(p)}</span>${btn('关闭', 'x-close')}</div><h2>${esc(p.title)}</h2><div class="x-reader-author">${avatar(p.authorName, p.avatar)}<div><strong>${esc(p.authorName)} @${esc(p.author)}</strong><small>${esc(date(p.publishedAt))} 发布 · ${esc(date(p.fetchedAt))} 采集</small></div></div><div class="actions">${link(p.url, '在 X 查看原帖 ↗')}${btn('从这条找选题', 'x-topic', extra, true)}${btn('读取完整长文与串文', 'x-thread', extra)}</div><p class="muted">这是公开来源文字，作者经验不能写成你的亲测。引用内容和串文可能有缺口。</p>${p.contentFetchErrors?.length ? `<div class="notice warn">本次补充读取存在缺口：${p.contentFetchErrors.map(esc).join('；')}</div>` : ''}<div class="pre x-reader-body">${esc(p.body)}</div>${article(p.article)}${quote ? `<section class="x-quote"><span class="tag">被引用内容 · ${esc(quote.authorName)} @${esc(quote.author)}</span><p>${link(quote.url, '被引用原帖')} · ${esc(date(quote.publishedAt))}</p><div class="pre">${esc(quote.body)}</div>${article(quote.article)}</section>` : p.quoteUnavailable ? '<div class="notice warn">被引用内容未能取得，不能从这条短评推断原文事实。</div>' : ''}${replies.length ? `<section class="x-article"><h3>已取得的作者续帖 · ${replies.length} 条</h3>${replies.map(i => `<div class="x-thread-post"><small>${link(i.url, '续帖原文')} · ${esc(date(i.publishedAt))}</small><div class="pre">${esc(i.body)}</div>${article(i.article)}</div>`).join('')}</section>` : ''}<p class="muted">${p.threadFetchedAt ? '串文查询时间：' + esc(date(p.threadFetchedAt)) + '；仍不能保证串文完整。' : '尚未单独查询串文，点击“读取完整长文与串文”可补充公开来源返回的正文和续帖。'}</p><small class="muted">累计快照：曝光 ${numeric(p.metrics.views)} · 收藏 ${numeric(p.metrics.bookmarks)} · 点赞 ${numeric(p.metrics.likes)}</small></dialog>`;
+  const commentsTab = selected.tab === 'comments';
+  const commentCount = commentSnapshot?.report.count ?? state.x.commentCollections?.find(c => c.postId === p.id)?.report.count;
+  const bodyContent = `<p class="muted">这是公开来源文字，作者经验不能写成你的亲测。引用内容和串文可能有缺口。</p>${p.contentFetchErrors?.length ? `<div class="notice warn">本次补充读取存在缺口：${p.contentFetchErrors.map(esc).join('；')}</div>` : ''}<div class="pre x-reader-body">${esc(p.body)}</div>${article(p.article)}${quote ? `<section class="x-quote"><span class="tag">被引用内容 · ${esc(quote.authorName)} @${esc(quote.author)}</span><p>${link(quote.url, '被引用原帖')} · ${esc(date(quote.publishedAt))}</p><div class="pre">${esc(quote.body)}</div>${article(quote.article)}</section>` : p.quoteUnavailable ? '<div class="notice warn">被引用内容未能取得，不能从这条短评推断原文事实。</div>' : ''}${replies.length ? `<section class="x-article"><h3>已取得的作者续帖 · ${replies.length} 条</h3>${replies.map(i => `<div class="x-thread-post"><small>${link(i.url, '续帖原文')} · ${esc(date(i.publishedAt))}</small><div class="pre">${esc(i.body)}</div>${article(i.article)}</div>`).join('')}</section>` : ''}<p class="muted">${p.threadFetchedAt ? '串文查询时间：' + esc(date(p.threadFetchedAt)) + '；仍不能保证串文完整。' : '尚未单独查询串文，点击“读取完整长文与串文”可补充公开来源返回的正文和续帖。'}</p>`;
+  return `<dialog id="x-reader" class="x-reader"><div class="x-reader-top"><span class="tag">公开原帖 · ${typeName(p)}</span>${btn('关闭', 'x-close')}</div><h2>${esc(p.title)}</h2>${progressMessage ? `<div class="progressbox" role="status"><span class="spinner"></span><span class="x-progress-message">${esc(progressMessage)}</span></div>` : ''}<div class="x-reader-author">${avatar(p.authorName, p.avatar)}<div><strong>${esc(p.authorName)} @${esc(p.author)}</strong><small>${esc(date(p.publishedAt))} 发布 · ${esc(date(p.fetchedAt))} 采集</small></div></div><div class="x-reader-tabs" aria-label="帖子详情"><button data-action="x-reader-tab" data-value="post" aria-pressed="${!commentsTab}" class="${!commentsTab ? 'selected' : ''}">正文与串文</button><button data-action="x-reader-tab" data-value="comments" aria-pressed="${commentsTab}" class="${commentsTab ? 'selected' : ''}">评论素材${Number.isInteger(commentCount) ? ' · ' + commentCount : ''}</button></div><div class="actions">${link(p.url, '在 X 查看原帖 ↗')}${btn('从这条找选题', 'x-topic', extra, true)}${btn('读取完整长文与串文', 'x-thread', extra)}</div>${commentsTab ? '' : bodyContent}${xCommentsPanel(p, selected, commentSnapshot)}<small class="muted">累计快照：曝光 ${numeric(p.metrics.views)} · 收藏 ${numeric(p.metrics.bookmarks)} · 点赞 ${numeric(p.metrics.likes)}</small></dialog>`;
 }

@@ -7,10 +7,11 @@ import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
 import os from 'node:os';
 import { createRequire } from 'node:module';
-import { now, today, hash, id, requireValue, text, parseJSON, validateCards, validatePlan, validateReview, approveOutline, saveDraft, gateDraft, gateImages, svgCard } from './core.mjs';
+import { now, today, hash, id, requireValue, text, parseJSON, validateCards, validatePlan, validateReview, approveOutline, saveDraft, saveGeneratedDraft, draftLength, gateDraft, gateImages, svgCard } from './core.mjs';
 import { methodStatus, methodContext } from './content-methods.mjs';
 import { X_DEFAULT_ACCOUNTS, X_HISTORY_DAYS, X_ACCOUNT_LIMIT, X_PROVIDER, xAccounts, xHandle, xImageURL, collectXAccount, normalizeXPost, xCandidates, xMaterial, xContentFingerprint } from './x-source.mjs';
-import { anonymousXProfile, publicXImage } from './x-public-network.mjs';
+import { anonymousXProfile, publicXImage, anonymousXJSON } from './x-public-network.mjs';
+import { collectXComments, publicComments } from './x-comments.mjs';
 import { VIRAL_DEFAULT_HANDLES, studySamples, validateStudy, validateCreation, STUDY_PROMPT, CREATION_PROMPT, viralProject } from './viral.mjs';
 import { growthLibrary, growthReferences, referenceSummary, methodologyCandidates, manualReference, VISUAL_METHODS, GROWTH_ANALYSIS_PROMPT, validateGrowthAnalysis, analysisStudy, ownCreationInput, metricRecord } from './growth.mjs';
 import { promptHash, promptBodyHash, currentDraftImage, validateDraftImages, imageSelection, preparedDraftAssets, attachPreparedImages } from './draft-images.mjs';
@@ -122,10 +123,10 @@ function saveXConfig(d) {
   return put('x-config', { id: 'x-config', accounts: xAccounts(d.accounts) }, previous.revision || null);
 }
 async function xJSON(url) {
-  const paused = Math.max(xRetryAt, ...xSnapshots().map(s => Date.parse(s.report?.retryAt) || 0));
+  const paused = Math.max(xRetryAt, ...[...xSnapshots(), ...xCommentSummaries()].map(s => Date.parse(s.report?.retryAt) || 0));
   if (paused > Date.now()) { const e = new Error('公开来源限流暂停中，请在 ' + new Date(paused).toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai' }) + ' 后重试'); e.rateLimited = true; e.retryAt = new Date(paused).toISOString(); throw e; }
   try {
-    const r = await remote(url, { timeout: 16000, headers: { 'User-Agent': 'PrivateXRadar-Public/1.0', Accept: 'application/json' } });
+    const r = await anonymousXJSON(url, remote);
     const data = JSON.parse(r.body.toString('utf8'));
     if (data.code === 429) { const e = new Error('公开来源报告限流，已暂停 15 分钟'); e.rateLimited = true; e.retryAt = new Date(Date.now() + 900000).toISOString(); throw e; }
     return { data, cacheAge: r.headers.get('age') };
@@ -150,7 +151,18 @@ async function refreshX({ handle = '', force = false, progress = () => {} } = {}
   })();
   try { return await xRefreshPromise; } finally { xRefreshPromise = null; }
 }
-function xState() { return { config: xConfig(), accounts: xSnapshots(), accountLimit: X_ACCOUNT_LIMIT, provider: X_PROVIDER, historyDays: X_HISTORY_DAYS, automaticWindowDays: 7, requiresLogin: false, officialAPI: false, retryAt: xRetryAt > Date.now() ? new Date(xRetryAt).toISOString() : null }; }
+function xCommentSummaries() {
+  return db.prepare("SELECT json_extract(payload,'$.postId') AS postId, json_extract(payload,'$.handle') AS handle, json_extract(payload,'$.report') AS report FROM objects WHERE kind='x-comments' ORDER BY rowid DESC").all().map(r => ({ ...r, report: JSON.parse(r.report) }));
+}
+function xState() { return { config: xConfig(), accounts: xSnapshots(), commentCollections: xCommentSummaries(), accountLimit: X_ACCOUNT_LIMIT, provider: X_PROVIDER, historyDays: X_HISTORY_DAYS, automaticWindowDays: 7, requiresLogin: false, officialAPI: false, retryAt: xRetryAt > Date.now() ? new Date(xRetryAt).toISOString() : null }; }
+function savedComments(postId) { try { return get('x-comments-' + postId); } catch { return null; } }
+async function readXComments(d, progress) {
+  const { post } = selectedXPost(d);
+  let previous = savedComments(post.id), revision = previous?.revision || null;
+  const result = await collectXComments(post, { fetchJSON: xJSON, previous, refresh: d.refresh === true, progress,
+    onCheckpoint: async snapshot => { const saved = put('x-comments', snapshot, revision); revision = saved.revision; } });
+  return publicComments(result);
+}
 function selectedXPost(d) {
   const handle = xHandle(d.handle);
   requireValue(xConfig().accounts.some(a => a.handle.toLowerCase() === handle.toLowerCase()), '观察账号不存在');
@@ -532,6 +544,7 @@ async function dispatch(route, d) {
   if (route === '/api/x/accounts') return saveXConfig(d);
   if (route === '/api/x/refresh') return createJob('x-sources', progress => refreshX({ handle: d.handle || '', force: true, progress }));
   if (route === '/api/x/thread') return createJob('x-sources', () => readXThread(d));
+  if (route === '/api/x/comments') { const { post } = selectedXPost(d); return createJob('x-comments-' + post.id, progress => readXComments(d, progress)); }
   if (route === '/api/x/topic') return createJob('recommend', async () => {
     const { snapshot, post } = selectedXPost(d); const candidate = xMaterial(post, snapshot.posts);
     const cards = await assessCandidates([candidate], [], '围绕这条用户指定的 X 公开材料，最多提出一个面向普通人的 AI 选题；原作者声明不是用户亲测，引用内容需注明作者。');
@@ -559,7 +572,17 @@ async function dispatch(route, d) {
   if (route === '/api/source') return projectJob(d, async p => { requireValue(p.card.sources.some(s => s.url === d.url), '链接不是该项目的信源'); p.evidence.push(await readSource(d.url)); return saveProject(p); });
   if (route === '/api/test') { const p = checkRevision(d); requireValue(p.outlineApproved, '请先确认提纲'); p.testNotes = text(d.notes, 20000); requireValue(p.testNotes.trim().length >= 20, '请填写具体测试步骤、观察结果和限制，至少 20 字'); p.testApproved = true; p.draftApproved = false; p.planApproved = false; p.stage = 'draft'; return saveProject(p); }
   if (route === '/api/evidence') { const p = checkRevision(d); p.evidence.push({ material: text(d.material, 30000), url: text(d.url || '', 2000), fetchedAt: now(), notice: '用户补充材料，需自行核对' }); p.draftApproved = false; p.planApproved = false; return saveProject(p); }
-  if (route === '/api/draft') return projectJob(d, async p => { gateDraft(p); const r = await llm('正文写作', '根据确认角度与提纲写 800—1500 字中文 X 单篇图文初稿。不要附配图提示在正文内。不得替用户虚构个人判断、体验或测试结果，缺口写入 warnings。明确公开资料与实测的区别。返回 {body:"正文",warnings:["待核实问题"]}。', { methods: methodContext('draft'), profile: profile(), card: p.card, angle: p.angle, outline: p.outline, test: p.testApproved ? p.testNotes : null, evidence: p.evidence }); const body = text(r.body, 20000).trim(); requireValue([...body].length >= 800 && [...body].length <= 1500, '模型初稿未满足 800—1500 字，本次没有覆盖正文。可检查模型设置后重试。'); const next = saveDraft(p, body); next.warnings = r.warnings || []; return saveProject(next); });
+  if (route === '/api/draft') return projectJob(d, async p => {
+    gateDraft(p);
+    const r = await llm('正文写作', '根据确认角度与提纲写中文 X 单篇图文初稿。正文目标 1000—1200 字符，给建议范围 800—1500 留出余量；只计算 body 的正文，标点、数字、字母、空白也计入。不以 tokens 代替字数。不要附配图提示在正文内。不得替用户虚构个人判断、体验或测试结果，缺口写入 warnings。明确公开资料与实测的区别。返回 {body:"正文",warnings:["待核实问题"]}。', { methods: methodContext('draft'), profile: profile(), card: p.card, angle: p.angle, outline: p.outline, test: p.testApproved ? p.testNotes : null, evidence: p.evidence });
+    return saveProject(saveGeneratedDraft(p, r));
+  });
+  if (route === '/api/draft/adjust') return projectJob(d, async p => {
+    gateDraft(p); requireValue(p.draft.trim(), '请先生成或保存正文');
+    const length = draftLength(p.draft); requireValue(length.status !== 'within', '当前正文已在建议字数范围内，可以直接编辑或确认');
+    const r = await llm('正文字数调整', '调整现有正文的长度，' + (length.status === 'short' ? '依据现有事实与提纲补充解释、读者场景和判断边界，避免重复凑字。' : '删掉重复和枝节，保留核心事实、出处、限定条件与结论。') + '正文目标 1000—1200 字符，建议范围 800—1500；只计 body，包含标点、数字、字母和空白。不新增材料外的事实、数字、个人经历或亲测。保留需要核实的事项。返回 {body:"调整后的正文",warnings:["待核实问题"]}。', { methods: methodContext('draft'), profile: profile(), card: p.card, angle: p.angle, outline: p.outline, body: p.draft, length, previousWarnings: p.warnings || [], test: p.testApproved ? p.testNotes : null, evidence: p.evidence });
+    return saveProject(saveGeneratedDraft(p, r, 'length-adjust'));
+  });
   if (route === '/api/draft/save') return saveProject(saveDraft(checkRevision(d), d.body));
   if (route === '/api/review') return projectJob(d, async p => {
     gateDraft(p); requireValue(p.draft.trim(), '请先生成或保存正文');
@@ -623,6 +646,10 @@ const server = http.createServer(async (req, res) => {
     requireValue(req.method === 'GET', '请求方法不支持');
     if (u.pathname === '/api/state') return reply(state());
     if (u.pathname === '/api/health') return reply({ service: 'private-x-radar', ok: true });
+    if (u.pathname === '/api/x/comments') {
+      const { post } = selectedXPost({ handle: u.searchParams.get('handle'), postId: u.searchParams.get('postId') });
+      return reply(publicComments(savedComments(post.id)));
+    }
     if (u.pathname === '/api/x/image') {
       const thumbnail = await xThumbnail(u.searchParams.get('url'));
       res.writeHead(200, { 'Content-Type': thumbnail.format === 'jpg' ? 'image/jpeg' : 'image/' + thumbnail.format, 'Cache-Control': 'private, max-age=21600', 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': CSP }); res.end(thumbnail.body); return;

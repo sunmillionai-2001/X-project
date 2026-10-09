@@ -40,6 +40,14 @@ test('X source refresh, quotes, old pin, full-text workflow, disabling, persiste
   assert(!pool.items.some(i => i.url === a.pinned.url));
   const quoted = pool.items.find(i => i.summary.includes('被引用的 AI 玩法')); assert(quoted.summary.includes('不是观察账号本人创作'));
   const root = a.posts.find(p => p.article);
+  assert.equal(await request('/api/x/comments?handle=Alice&postId=' + root.id), null);
+  const comments = await job('/api/x/comments', { handle: 'Alice', postId: root.id });
+  assert.equal(comments.report.count, 3); assert.equal(comments.report.status, 'partial');
+  assert.equal(new Set(comments.comments.map(p => p.id)).size, 3);
+  assert(comments.comments.some(p => p.replyToId !== root.id), 'keep nested reader replies');
+  assert.equal((await request('/api/state')).calls.length, 0, 'Anonymous comments must not invoke paid models');
+  assert(!('checkpoints' in comments)); assert(!('pending' in comments));
+  await assert.rejects(() => request('/api/x/comments', { handle: 'Alice', postId: a.posts.find(p => p.replyToId).id }), /主帖/);
   await assert.rejects(() => job('/api/x/topic', { handle: 'Alice', postId: root.id }), /配置/);
   await request('/api/settings', { textBase: 'https://example.com/v1', textModel: 'fixture', textKey: 'private-x-test-only' });
   const result = await job('/api/x/topic', { handle: 'Alice', postId: root.id });
@@ -57,6 +65,8 @@ test('X source refresh, quotes, old pin, full-text workflow, disabling, persiste
   assert.equal((await request('/api/state')).x.accounts[0].posts.length, thread.posts.length);
   await stop(); await start();
   state = await request('/api/state'); assert.equal(state.x.config.accounts[0].enabled, false); assert.equal(state.x.accounts[0].posts.length, thread.posts.length);
+  const savedComments = await request('/api/x/comments?handle=Alice&postId=' + root.id);
+  assert.equal(savedComments.report.count, 3); assert.equal(state.x.commentCollections[0].report.count, 3);
   assert(!JSON.stringify(state).includes('private-x-test-only'));
   config = await request('/api/x/accounts', { revision: config.revision, accounts: [{ handle: 'Alice', enabled: true }, { handle: 'FailAI', enabled: true }] });
   const failed = await job('/api/x/refresh'); assert.equal(failed.accounts.find(s => s.handle === 'FailAI').report.status, 'error');

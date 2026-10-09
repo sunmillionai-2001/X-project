@@ -5,10 +5,11 @@ const growthForm = initialGrowthForm();
 const viralForm = initialViralForm();
 let viralQueryTimer;
 const views = ['daily', 'x', 'viral', 'growth', 'search', 'projects', 'project', 'settings', 'costs', 'skills'];
-const hashView = location.hash.slice(1);
+const hashView = location.hash.slice(1).split('/')[0];
 let state, view = views.includes(hashView) ? hashView : sessionStorage.getItem('radar-view') || 'daily', projectId = sessionStorage.getItem('radar-project'), searchResult = null, busy = false;
 if (!views.includes(view)) view = 'daily';
 let busyMessage = '', xOpened = null, xManageOpen = false, xQueryTimer;
+const xComments = new Map();
 const xFilters = { account: 'all', type: 'all', range: '7', sort: 'latest', query: '', limit: 24 };
 let browseStarted = new Date().toISOString();
 const $ = selector => document.querySelector(selector);
@@ -39,7 +40,7 @@ async function task(route, data = {}) {
   try {
     let result = await api(route, data);
     if (result.status === 'running') {
-      while (result.status === 'running') { if (result.message) { busyMessage = result.message; const progress = $('#progress-message'); if (progress) progress.textContent = busyMessage; } await new Promise(r => setTimeout(r, 1200)); result = await api('/api/job/' + result.id); }
+      while (result.status === 'running') { if (result.message) { busyMessage = result.message; for (const el of document.querySelectorAll('#progress-message,.x-progress-message')) el.textContent = busyMessage; } await new Promise(r => setTimeout(r, 1200)); result = await api('/api/job/' + result.id); }
       if (result.status === 'error') throw Error(result.error);
       result = result.result;
     }
@@ -88,6 +89,13 @@ function skillsPage() {
   };
   return `<div class="hero"><div><div class="eyebrow">Connected content methods</div><h1>已接入技能</h1><p>这里列出实际安装并参与工作台流程的技能。它们只提供内容判断和诊断方法，不会替你发布到 X。</p></div></div>${packages.map(p => `<div class="panel skill-package"><div class="sectionhead"><div><h2>${esc(p.name)}</h2><p class="muted">${esc(p.url)}</p></div><span class="tag">${p.enabled ? '已启用' : '文件缺失'}</span></div><p><strong>版本：</strong><code>${esc(p.commit.slice(0, 12))}</code>　<strong>许可：</strong>${esc(p.license)}</p><div class="skill-grid">${p.skills.map(name => `<div class="skill-entry"><strong>${esc(name)}</strong><small>${esc(descriptions[name] || '已安装入口，可按需调用。')}</small></div>`).join('')}</div></div>`).join('')}<div class="panel"><h3>当前网页中的生效位置</h3><ol><li>今日雷达：生成选题时检查受众、阅读收益、材料依据和证据缺口。</li><li>爆款创作：用真实帖子拆解表达、结构、内容方法和运营线索，每条结论附原句证据；写作单独使用事实材料。</li><li>X 起号：单篇结构拆解、原创图文和本机复盘；新研究的方法与版本见「项目与 Skills」。</li><li>我的稿件：生成正文后可以运行原句级内容审稿。</li><li>模型与风格：显示接入状态、版本和许可。</li></ol><p class="muted">当前不输出阅读量预测，也不把模型主观判断称为已校准数据。</p></div>`;
 }
+function draftLengthNotice(body) {
+  if (!body.trim()) return '';
+  const count = [...body].length;
+  if (count >= 800 && count <= 1500) return '';
+  const short = count < 800;
+  return notice('当前正文 ' + count + ' 字符，' + (short ? '低于' : '超过') + '建议的 800—1500 范围。可继续编辑，或点击下方按钮调整长度。<div class="actions">' + button(short ? '扩写到建议字数' : '精简到建议字数', 'adjust-draft') + '<small>会调用一次写作模型</small></div>', 'warn');
+}
 function projectPage() {
   const p = state.projects.find(p => p.id === projectId); if (!p) return projectsPage();
   const phases = ['outline', ...(p.card.needsTest ? ['testing'] : []), 'draft', 'plan', 'images', 'done']; const current = phases.indexOf(p.stage);
@@ -96,7 +104,7 @@ function projectPage() {
   let body = '';
   if (p.stage === 'outline') body = `<div class="panel"><h2>先确定，你想讲什么。</h2><label>建议角度<select id="angle-select">${p.card.angles.map(a => `<option ${a === p.angle ? 'selected' : ''}>${esc(a)}</option>`).join('')}</select></label>${field('你的写作角度', 'angle', p.angle, { area: true, rows: 2 })}${field('提纲 · 可直接修改', 'outline', p.outline, { area: true, rows: 13 })}${button('确认角度与提纲 →', 'outline', '', true)}</div>`;
   if (p.stage === 'testing') body = `<div class="panel"><h2>用实测，补上关键证据。</h2><ol>${p.card.testSteps.map(t => `<li>${esc(t)}</li>`).join('')}</ol>${field('实际测试步骤、观察结果与限制', 'test-notes', p.testNotes, { area: true, rows: 9 })}<label>上传真实截图（PNG / JPG / WebP）<input type="file" id="evidence-upload" accept="image/png,image/jpeg,image/webp"></label>${button('上传实测截图', 'upload-evidence')}<div class="divider"></div>${button('确认实测结果，进入写作 →', 'test', '', true)}</div>`;
-  if (p.stage === 'draft') body = `<div class="panel"><div class="sectionhead"><h2>把角度写成一篇完整帖子。</h2><span class="pill">800—1500 字</span></div><div class="actions">${button(p.draft ? '重新生成初稿' : '生成正文初稿', 'draft', '', true)}${button('返回修改提纲', 'back-outline')}</div><div class="divider"></div>${p.warnings?.length ? notice(p.warnings.map(w => esc(w)).join('<br>'), 'warn') : ''}<label>正文<textarea class="editor" id="draft">${esc(p.draft)}</textarea></label><p class="muted"><span id="char-count">${[...p.draft].length}</span> 字符 · 修改后先保存，再确认</p><div class="actions">${button('保存正文版本', 'save-draft')}${p.draft ? button('做一次内容审稿', 'review') : ''}${button('确认正文，准备配图 →', 'approve-draft', '', true)}</div>${reviewHTML(p.review)}${p.versions.length ? `<details class="history"><summary>历史正文 · ${p.versions.length} 个版本</summary>${p.versions.slice().reverse().map(v => `<details><summary>${date(v.at)} · ${[...v.body].length} 字符</summary><p class="pre">${esc(v.body)}</p></details>`).join('')}</details>` : ''}</div>`;
+  if (p.stage === 'draft') body = `<div class="panel"><div class="sectionhead"><h2>把角度写成一篇完整帖子。</h2><span class="pill">建议 800—1500 字</span></div><div class="actions">${button(p.draft ? '重新生成初稿' : '生成正文初稿', 'draft', '', true)}${button('返回修改提纲', 'back-outline')}</div><div class="divider"></div><div id="draft-length-note">${draftLengthNotice(p.draft)}</div>${p.warnings?.length ? notice(p.warnings.map(w => esc(w)).join('<br>'), 'warn') : ''}<label>正文<textarea class="editor" id="draft">${esc(p.draft)}</textarea></label><p class="muted"><span id="char-count">${[...p.draft].length}</span> 字符 · 修改后先保存，再确认</p><div class="actions">${button('保存正文版本', 'save-draft')}${p.draft ? button('做一次内容审稿', 'review') : ''}${button('确认正文，准备配图 →', 'approve-draft', '', true)}</div>${reviewHTML(p.review)}${p.versions.length ? `<details class="history"><summary>历史正文 · ${p.versions.length} 个版本</summary>${p.versions.slice().reverse().map(v => `<details><summary>${date(v.at)} · ${[...v.body].length} 字符</summary><p class="pre">${esc(v.body)}</p></details>`).join('')}</details>` : ''}</div>`;
   if (p.stage === 'plan') body = `<div class="panel"><h2>让图片补充正文。</h2><div class="actions">${button(p.plan ? '重新生成方案' : '生成配图方案', 'plan', '', true)}${button('修改正文', 'back-draft')}</div>${p.plan ? `<p class="muted">逐张修改用途与内容。信息图可直接制作；原创插图可复制提示词到 ChatGPT 生成后导入。</p>${p.plan.map((i, n) => `<div class="planitem"><h3>第 ${n + 1} 张</h3><label>配图类型<select id="plan-kind-${n}">${Object.entries(kindLabels).map(([k, v]) => `<option value="${k}" ${k === i.kind ? 'selected' : ''}>${v}</option>`).join('')}</select></label>${field('标题', 'plan-title-' + n, i.title)}${field('这张图要说明什么', 'plan-description-' + n, i.description, { area: true, rows: 3 })}${field('信息图要点（每行一条，最多 7 条）', 'plan-points-' + n, i.points.join('\n'), { area: true, rows: 4 })}${field('原创插图的画面描述（截图和信息图可留空）', 'plan-prompt-' + n, i.prompt, { area: true, rows: 3 })}</div>`).join('')}<div class="divider"></div><div class="actions">${button('保存方案修改', 'save-plan')}${button('确认方案，开始制作 →', 'approve-plan', '', true)}</div>` : ''}</div>`;
   if (p.stage === 'images' || p.stage === 'done') body = `<div class="panel"><h2>${p.stage === 'done' ? '图文已准备好。' : '逐张完成配图。'}</h2>${p.plan.map(i => imagePlanItem(p, i)).join('')}<div class="divider"></div><div class="actions">${button('复制正文', 'copy')}${button('下载正文', 'download-draft')}${p.stage !== 'done' ? button('图文完成，记录采用 ✓', 'complete', '', true) : '<span class="tag">已计入本周完成</span>'}${button('修改正文', 'back-draft')}${button('修改配图方案', 'back-plan')}</div><details><summary>查看最终正文</summary><p class="pre">${esc(p.draft)}</p></details></div>`;
   const assets = p.assets.filter(a => !a.planId);
@@ -114,7 +122,7 @@ function costsPage() { const currencies = [...new Set(state.calls.map(c => c.cur
 function render() {
   if (!state) return;
   const nav = [['daily', '◉', '今日雷达'], ['x', '𝕏', 'X 信号源'], ['viral', '✦', '爆款创作'], ['growth', '↗', 'X 起号'], ['search', '⌕', '主题与材料'], ['projects', '▤', '我的稿件'], ['settings', '⚙', '模型与风格'], ['costs', '↗', '用量与费用'], ['skills', '◇', '已接入技能']];
-  $('#app').innerHTML = `<div class="shell"><aside class="sidebar"><div class="brand"><div class="brandmark">r.</div><div><strong>选题雷达</strong><small>PRIVATE X STUDIO</small></div></div><nav class="nav">${nav.map(([key, icon, label]) => `<button data-action="nav" data-view="${key}" class="${view === key || view === 'project' && key === 'projects' ? 'active' : ''}"><span>${icon}</span>${label}</button>`).join('')}</nav><div class="sidebarfooter"><span class="dot"></span> Windows 本机运行<br>你的想法，留在自己的工作台。<br><small>手动发布 · 原创表达</small></div></aside><main class="main"><header class="topbar"><span>私人创作工作台 / ${nav.find(n => n[0] === view)?.[2] || '图文创作'}</span><span class="pill">${state.date} · 本机保存</span></header>${busy ? `<div class="progressbox" role="status"><span class="spinner"></span><span id="progress-message">${esc(busyMessage)}</span></div>` : ''}${view === 'daily' ? dailyPage() : view === 'x' ? xPage(state, xFilters) : view === 'viral' ? viralPage(state, viralForm, { esc, link, date, button, notice }) : view === 'growth' ? growthPage(state, growthForm, { esc, link, date, button, notice }) : view === 'search' ? searchPage() : view === 'project' ? projectPage() : view === 'projects' ? projectsPage() : view === 'skills' ? skillsPage() : view === 'settings' ? settingsPage() : costsPage()}<footer>AIHOT + 观察名单中的 X 公开帖子 + 你配置的一手来源 · AI 结果需要核实 · 手动发布到 X</footer></main></div>${view === 'x' ? xReader(state, xOpened) : ''}`;
+  $('#app').innerHTML = `<div class="shell"><aside class="sidebar"><div class="brand"><div class="brandmark">r.</div><div><strong>选题雷达</strong><small>PRIVATE X STUDIO</small></div></div><nav class="nav">${nav.map(([key, icon, label]) => `<button data-action="nav" data-view="${key}" class="${view === key || view === 'project' && key === 'projects' ? 'active' : ''}"><span>${icon}</span>${label}</button>`).join('')}</nav><div class="sidebarfooter"><span class="dot"></span> Windows 本机运行<br>你的想法，留在自己的工作台。<br><small>手动发布 · 原创表达</small></div></aside><main class="main"><header class="topbar"><span>私人创作工作台 / ${nav.find(n => n[0] === view)?.[2] || '图文创作'}</span><span class="pill">${state.date} · 本机保存</span></header>${busy ? `<div class="progressbox" role="status"><span class="spinner"></span><span id="progress-message">${esc(busyMessage)}</span></div>` : ''}${view === 'daily' ? dailyPage() : view === 'x' ? xPage(state, xFilters) : view === 'viral' ? viralPage(state, viralForm, { esc, link, date, button, notice }) : view === 'growth' ? growthPage(state, growthForm, { esc, link, date, button, notice }) : view === 'search' ? searchPage() : view === 'project' ? projectPage() : view === 'projects' ? projectsPage() : view === 'skills' ? skillsPage() : view === 'settings' ? settingsPage() : costsPage()}<footer>AIHOT + 观察名单中的 X 公开帖子 + 你配置的一手来源 · AI 结果需要核实 · 手动发布到 X</footer></main></div>${view === 'x' ? xReader(state, xOpened, xComments.get(xOpened?.id), busy ? busyMessage : '') : ''}`;
   if ($('#x-management')) $('#x-management').open = xManageOpen;
   if ($('#x-reader')) $('#x-reader').showModal();
   if (busy) for (const el of document.querySelectorAll('button,input,textarea,select')) el.disabled = true;
@@ -213,8 +221,37 @@ async function act(action, target) {
     if (action === 'x-remove' && xFilters.account === handle) xFilters.account = 'all';
     await task('/api/x/accounts', { revision: state.x.config.revision, accounts }); toast(action === 'x-remove' ? '已移出观察名单' : '账号状态已保存');
   }
-  if (action === 'x-open') { xOpened = { handle: target.dataset.handle, id: target.dataset.id }; render(); }
-  if (action === 'x-close') { xOpened = null; render(); }
+  if (action === 'x-open' || action === 'x-open-comments') {
+    const selected = { handle: target.dataset.handle, id: target.dataset.id, commentLimit: 24, commentSort: 'latest', tab: action === 'x-open-comments' ? 'comments' : 'post' };
+    history.replaceState(null, '', selected.tab === 'comments' ? '#x/' + selected.handle + '/' + selected.id + '/comments' : '#x');
+    xOpened = selected; render();
+    xComments.set(selected.id, await api('/api/x/comments?handle=' + encodeURIComponent(selected.handle) + '&postId=' + selected.id));
+    if (xOpened === selected) render();
+  }
+  if (action === 'x-reader-tab') {
+    xOpened.tab = target.dataset.value;
+    history.replaceState(null, '', xOpened.tab === 'comments' ? '#x/' + xOpened.handle + '/' + xOpened.id + '/comments' : '#x');
+    render();
+  }
+  if (action === 'x-comments') {
+    const result = await task('/api/x/comments', { handle: target.dataset.handle, postId: target.dataset.id, refresh: target.dataset.refresh === 'true' });
+    xComments.set(result.postId, result); render();
+    document.querySelector('#x-comments')?.scrollIntoView({ block: 'start' });
+    toast('评论已保存：' + result.report.count + ' 条，本轮新增 ' + result.report.newCount + ' 条');
+  }
+  if (action === 'x-comment-more' || action === 'x-comment-sort') {
+    const scroll = document.querySelector('#x-reader')?.scrollTop || 0;
+    if (action === 'x-comment-more') xOpened.commentLimit += 24;
+    else { xOpened.commentSort = target.dataset.value; xOpened.commentLimit = 24; }
+    render(); document.querySelector('#x-reader').scrollTop = scroll;
+  }
+  if (action === 'x-copy-comments') {
+    const saved = xComments.get(target.dataset.id);
+    await navigator.clipboard.writeText(['原帖：' + saved.rootURL, '公开评论快照：' + saved.report.lastSavedAt,
+      ...saved.comments.map(c => '@' + c.author + ' · ' + c.url + '\n' + c.body)].join('\n\n'));
+    toast('已复制评论素材，保留作者与原文链接');
+  }
+  if (action === 'x-close') { xOpened = null; history.replaceState(null, '', '#x'); render(); }
   if (action === 'x-thread') { await task('/api/x/thread', { handle: target.dataset.handle, postId: target.dataset.id }); toast('已查询作者串文，公开来源仍可能缺帖'); }
   if (action === 'x-topic') { const data = { handle: target.dataset.handle, postId: target.dataset.id }; xOpened = null; searchResult = await task('/api/x/topic', data); navigate('search'); }
   if (action === 'x-type') { xFilters.type = target.dataset.value; xFilters.limit = 24; render(); }
@@ -234,7 +271,16 @@ async function act(action, target) {
   if (action === 'test') await task('/api/test', pd({ notes: value('test-notes') }));
   if (action === 'upload-evidence') await upload($('#evidence-upload').files[0]);
   if (action === 'upload-plan') await upload($('#upload-' + target.dataset.id).files[0], target.dataset.id);
-  if (action === 'draft') await task('/api/draft', pd());
+  if (action === 'draft') {
+    const result = await task('/api/draft', pd());
+    toast('初稿已保存：' + result.draftGeneration.count + ' 字符' + (result.draftGeneration.status === 'within' ? '' : '，可按提示调整长度'));
+  }
+  if (action === 'adjust-draft') {
+    const body = value('draft');
+    if (body !== project().draft) await task('/api/draft/save', pd({ body }));
+    const result = await task('/api/draft/adjust', pd());
+    toast('调整稿已保存：' + result.draftGeneration.count + ' 字符；上一版保留在历史正文中');
+  }
   if (action === 'save-draft') { await task('/api/draft/save', pd({ body: value('draft') })); toast('正文版本已保存'); }
   if (action === 'review') { const body = value('draft'); if (body !== project().draft) await task('/api/draft/save', pd({ body })); await task('/api/review', pd()); toast('内容审稿已完成'); }
   if (action === 'approve-draft') { const body = value('draft'); if (body !== project().draft) await task('/api/draft/save', pd({ body })); await task('/api/draft/approve', pd()); }
@@ -286,14 +332,22 @@ document.addEventListener('change', e => { if (e.target.id === 'angle-select') $
 document.addEventListener('change', e => { const key = { 'x-filter-account': 'account', 'x-filter-range': 'range', 'x-filter-sort': 'sort' }[e.target.id]; if (key) { xFilters[key] = e.target.value; xFilters.limit = 24; render(); } });
 document.addEventListener('input', e => { if (e.target.id !== 'x-filter-query') return; clearTimeout(xQueryTimer); const text = e.target.value; xQueryTimer = setTimeout(() => { xFilters.query = text; xFilters.limit = 24; render(); const input = $('#x-filter-query'); if (input) { input.focus(); input.setSelectionRange(text.length, text.length); } }, 250); });
 document.addEventListener('toggle', e => { if (e.target.id === 'x-management' && e.target.isConnected) xManageOpen = e.target.open; }, true);
-document.addEventListener('close', e => { if (e.target.id === 'x-reader' && e.target.isConnected) xOpened = null; }, true);
+document.addEventListener('close', e => { if (e.target.id === 'x-reader' && e.target.isConnected) { xOpened = null; history.replaceState(null, '', '#x'); } }, true);
 document.addEventListener('error', e => { if (e.target.matches?.('.x-cover img,.x-avatar img')) e.target.remove(); }, true);
-document.addEventListener('input', e => { if (e.target.id === 'draft') $('#char-count').textContent = [...e.target.value].length; });
+document.addEventListener('input', e => { if (e.target.id === 'draft') { $('#char-count').textContent = [...e.target.value].length; $('#draft-length-note').innerHTML = draftLengthNotice(e.target.value); } });
 async function boot() {
-  await reload(); render();
+  await reload();
+  const parts = location.hash.slice(1).split('/');
+  const linkedComment = view === 'x' && parts.length === 4 && /^[A-Za-z0-9_]{1,15}$/.test(parts[1]) && /^\d{2,20}$/.test(parts[2]) && parts[3] === 'comments';
+  if (linkedComment) xOpened = { handle: parts[1], id: parts[2], tab: 'comments', commentLimit: 24, commentSort: 'latest' };
+  render();
+  if (linkedComment) {
+    try { xComments.set(parts[2], await api('/api/x/comments?handle=' + encodeURIComponent(parts[1]) + '&postId=' + parts[2])); render(); }
+    catch (e) { xOpened = null; render(); toast(e.message); }
+  }
   const running = state.jobs.find(j => j.status === 'running');
   if (running) { busy = true; busyMessage = running.message || '本机任务正在执行，等待取得结果。'; render(); let j = running; while (j.status === 'running') { if (j.message && $('#progress-message')) $('#progress-message').textContent = j.message; await new Promise(r => setTimeout(r, 1200)); j = await api('/api/job/' + j.id); } busy = false; await reload(); render(); if (j.status === 'error') toast(j.error); }
-  if (view === 'x' && !running) {
+  if (view === 'x' && !running && !linkedComment) {
     const needsRefresh = state.x.config.accounts.some(a => a.enabled && !state.x.accounts.some(s => s.handle.toLowerCase() === a.handle.toLowerCase() && new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(new Date(s.report.lastAttemptAt)) === state.date));
     if (needsRefresh) { try { await task('/api/x/refresh'); } catch (e) { toast(e.message); } }
   }

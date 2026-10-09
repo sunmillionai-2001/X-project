@@ -16,7 +16,10 @@ function actor(handle) {
   const repost = make(5, 6, { author: { screen_name: 'OtherAuthor' }, reposted_by: { screen_name: handle }, text: '纯转发，不应进入选题池' });
   const pin = make(30 * 1440, 7, { text: '', article: { id: '2104910491625607169', title: '合成旧置顶 · ' + handle, content: { blocks: [{ text: '旧置顶正文不作为今天新热点。' }] } } });
   const studyPosts = handle === 'StudyAI' ? [make(40, 8, { text: '合成知识型帖子：先说明具体问题，再写操作步骤和限制，这是研究测试。', bookmarks: 180 }), make(80, 9, { text: '合成知识型帖子：用读者的普通场景说明工具用途，最后说明验证方法。', bookmarks: 65 }), make(120, 10, { text: '合成知识型帖子：介绍一个新的工作流程，同时区分已知事实与个人判断。', bookmarks: 12 }), make(180, 11, { text: '合成知识型帖子：讨论为什么一条内容需要有可以回到原文的材料依据。', bookmarks: 4 })] : [];
-  const data = { handle, root, quote, reply, reply2, repost, pin, studyPosts }; actors.set(handle, data); return data;
+  const comment1 = make(7, 12, { text: '合成读者问题：这个工具支持中文吗？', author: { screen_name: 'ReaderOne', name: '合成读者甲' }, replying_to: { status: root.id, screen_name: handle } });
+  const comment2 = make(6, 13, { text: '合成读者问题：怎么开始使用？', author: { screen_name: 'ReaderTwo', name: '合成读者乙' }, replying_to: { status: root.id, screen_name: handle } });
+  const nested = make(5, 14, { text: '合成读者回复：需要先注册。', author: { screen_name: 'ReaderThree', name: '合成读者丙' }, replying_to: { status: comment2.id, screen_name: 'ReaderTwo' } });
+  const data = { handle, root, quote, reply, reply2, repost, pin, studyPosts, comment1, comment2, nested }; actors.set(handle, data); return data;
 }
 export async function mockXFetch(u, options = {}) {
   if (u.hostname === 'pbs.twimg.com') return new Response(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aNAAAAABJRU5ErkJggg==', 'base64'), { headers: { 'Content-Type': 'image/png' } });
@@ -32,6 +35,16 @@ export async function mockXFetch(u, options = {}) {
     return json({ code: 200, results: u.searchParams.has('cursor') ? [a.root] : [a.root, a.quote, a.reply, a.repost, ...a.studyPosts], cursor: { bottom: u.searchParams.has('cursor') ? null : 'second-page' } });
   }
   const id = u.pathname.split('/').at(-1);
+  if (u.pathname.startsWith('/2/conversation/')) {
+    const a = [...actors.values()].find(a => a.root.id === id);
+    return a && !u.searchParams.has('cursor') ? json({ code: 200, status: a.root, replies: [a.comment1], cursor: { bottom: 'broken-page' } }) : json({ code: 404 }, 404);
+  }
+  if (u.pathname === '/2/search') {
+    const rootId = u.searchParams.get('q')?.match(/^conversation_id:(\d+)(?:\s|$)/)?.[1];
+    const a = [...actors.values()].find(a => a.root.id === rootId);
+    if (!a) return json({ code: 404 });
+    return json({ code: 200, results: u.searchParams.has('cursor') ? [a.comment2] : [a.comment1, a.nested], cursor: { bottom: u.searchParams.has('cursor') ? null : 'search-second-page' } });
+  }
   if (u.pathname.startsWith('/2/thread/')) { const a = [...actors.values()].find(a => a.root.id === id); return a ? json({ code: 200, status: a.root, thread: [a.root, a.reply, a.reply2] }) : json({ code: 404 }); }
   return statuses.has(id) ? json({ code: 200, tweet: statuses.get(id) }) : json({ code: 404 });
 }

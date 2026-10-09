@@ -55,6 +55,18 @@ export function saveDraft(project, draft) {
   if (draft === project.draft) return project;
   return { ...project, draft, draftApproved: false, planApproved: false, plan: null, review: null, completedAt: null, stage: 'draft', versions: [...project.versions, { id: id(), body: draft, at: now() }] };
 }
+export function draftLength(body) {
+  const count = [...body].length;
+  return { count, min: 800, max: 1500, status: count < 800 ? 'short' : count > 1500 ? 'long' : 'within' };
+}
+export function saveGeneratedDraft(project, result, kind = 'initial') {
+  requireValue(typeof result?.body === 'string', '模型没有返回可用正文，本次保留已有内容');
+  const body = text(result.body, 30000).trim();
+  requireValue(body, '模型返回了空正文，本次保留已有内容');
+  const next = saveDraft(project, body);
+  return { ...next, draftGeneration: { ...draftLength(body), kind, at: now() },
+    warnings: Array.isArray(result.warnings) ? result.warnings.filter(w => typeof w === 'string' && w.trim()).map(w => w.slice(0, 2000)).slice(0, 12) : [] };
+}
 export function validateReview(result, draft) {
   const summary = text(result.summary, 2000).trim(); requireValue(summary, '审稿摘要不能为空');
   requireValue(Array.isArray(result.issues) && result.issues.length <= 8, '审稿问题需为最多八项');

@@ -27,7 +27,16 @@ globalThis.fetch = async (url, options = {}) => {
         data = { titles: ['合成原创稿标题一', '合成原创稿标题二'], body: '这是一段仅用于隔离流程验收的中文测试稿，不能当作真实资讯或用户文章。'.repeat(28), outline: '讲问题\n讲方法\n讲限制', methodsUsed: [{ insightId: user.study.profiles[0].insights[0].id, application: '合成结构借鉴说明' }], sourceNotes: [{ materialId: user.materials[0].id, quote: user.materials[0].text.slice(0, 16), use: '仅使用合成材料事实' }], verificationNotes: ['测试内容，不用于真实发布'], images: [{ title: '测试原创示意图一', prompt: '合成原创示意图提示词，不伪造截图' }, { title: '测试原创示意图二', prompt: '合成手机可读流程示意图提示词' }] };
         if (input.model === 'growth-missing-citation' && !system.includes('本次请修复')) data.sourceNotes = [];
       }
-      else if (system.includes('返回 {body:')) data = { body: '这是一段仅用于隔离流程验收的中文测试稿，不能当作真实资讯或用户文章。'.repeat(28), warnings: ['测试内容，非实测产出'] };
+      else if (system.includes('返回 {body:')) {
+        let body = '这是一段仅用于隔离流程验收的中文测试稿，不能当作真实资讯或用户文章。'.repeat(28);
+        if (!system.includes('调整现有正文的长度')) {
+          if (input.model === 'fixture-short-draft') body = '合成短稿，保留正文。'.repeat(12);
+          if (input.model === 'fixture-long-draft') body = '合成长稿，只用于验证超长初稿不会被丢弃。'.repeat(100);
+          if (input.model === 'fixture-empty-draft') body = '  ';
+        }
+        else if (input.model === 'fixture-short-adjust') body = '合成调整稿，仍然较短。'.repeat(14);
+        data = { body, warnings: ['测试内容，非实测产出'] };
+      }
       else if (system.includes('为当前正文提出')) data = { images: [{ kind: 'infographic', title: '流程测试图', description: '验证图文流程', prompt: '', points: ['测试资料仅用于隔离验收', '先确认正文，再制作图片'] }, { kind: 'screenshot', title: '真实截图测试', description: '测试上传', prompt: '', points: [] }] };
       else if (system.includes('最多八项') || system.includes('只提出问题')) { const user = JSON.parse(input.messages[1].content); data = { summary: '测试审稿摘要', audience: '需要了解 AI 工具的普通读者', readerBenefit: '获得一个可执行判断', issues: [{ quote: user.body.slice(0, 20), problem: '测试问题', suggestion: '测试建议' }] }; }
       else { const user = JSON.parse(input.messages[1].content); data = { cards: [{ candidateIds: [user.candidates[0].id], eventKey: 'fixture-event', title: '隔离测试选题', type: 'practice', summary: '仅用于功能测试', reason: '测试阶段确认', angles: ['从用途讲起', '从限制讲起'], outline: '开头说明任务，正文讲方法，结尾说明限制。', needsTest: true, testSteps: ['上传真实截图', '填写观察结果和限制'], facts: ['合成数据，不是真实消息'], unknowns: ['需要测试'], newProgress: '', assessment: { audience: '想尝试 AI 工具的普通读者', readerBenefit: '知道下一步怎么验证', angleBasis: '依据合成材料中的工具更新', materialGap: '仍需读取原文核实', confidence: 'medium' } }] }; }
